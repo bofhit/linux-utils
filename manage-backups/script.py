@@ -64,10 +64,11 @@ def main():
     # Get all files within root directory.
     files = list(backup_path_root.rglob('*'))
 
-    lw.logger.debug(f'Found {len(files)} files:')
+    files.sort(key=lambda x: re.search(TIMESTAMP_PAT, x.name).group())
 
+    lw.logger.debug(f'Found {len(files)} files:')
     for file in files:
-        lw.logger.debug(file.name)
+        lw.logger.debug(ic(file.name))
 
     # ========================================================================
     # Filter files with a valid timestamp.
