@@ -20,7 +20,7 @@ from ivy.wrapper import LoggerWrapper
 
 
 
-TIMESTAMP_PAT = re.compile('\d{4}-\d{2}-\d{2}T\d{2}.\d{2}.d{2}')
+TIMESTAMP_PAT = re.compile('\d{4}-\d{2}-\d{2}T\d{2}.\d{2}.\d{2}')
 
 # ============================================================================
 # Import and validate parameters.
@@ -73,7 +73,7 @@ def main():
     # Filter files with a valid timestamp.
     files_with_valid_timestamps = []
     for file in files:
-        if re.match(TIMESTAMP_PAT, file.name):
+        if re.search(TIMESTAMP_PAT, file.name):
             files_with_valid_timestamps.append(file)
         else:
             lw.logger.debug(f'No valid timestamp in {file.name}.')
