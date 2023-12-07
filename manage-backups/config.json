@@ -1,0 +1,6 @@
+{
+    "BACKUP_ROOT": "/home/tim/docker/dumps",
+    "KEEP_ALL": 3,
+    "KEEP_DAILY": 7,
+    "KEEP_WEEKLY": 365
+}
