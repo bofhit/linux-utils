@@ -36,7 +36,7 @@
     },
     "formatters": {
         "console_formatter": {
-            "format": "%(asctime)s [%(levelname)s] \t%(name)s\t\t%(message)s",
+            "format": "%(asctime)s [%(levelname)s] \t%(name)s\t%(message)s",
 			"datefmt": "%H:%M:%S"
         },
         "file_formatter": {
