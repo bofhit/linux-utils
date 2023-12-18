@@ -1,6 +1,11 @@
 {
-    "BACKUP_ROOT": "/home/tim/docker/dumps",
-    "KEEP_ALL": 3,
-    "KEEP_DAILY": 7,
-    "KEEP_WEEKLY": 365
+    "BACKUP_ROOT": "/home/tim/apps/docker/dumps",
+    "KEEP_ALL": 3, 
+    "KEEP_DAILY": 10,
+    "KEEP_WEEKLY": 180,
+
+    "LOGGER_NAME": "manage-backups",
+    "LOGGER_CONFIG": "ivy/logger_config.json",
+    "LOG_FILE": "/var/log/manage-backups/log"
+
 }
