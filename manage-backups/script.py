@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 
 from icecream import ic
+import pendulum
 
 from ivy.wrapper import LoggerWrapper
 
@@ -64,7 +65,6 @@ def main():
     # Get all files within root directory.
     files = list(backup_path_root.rglob('*'))
 
-    files.sort(key=lambda x: re.search(TIMESTAMP_PAT, x.name).group())
 
     lw.logger.debug(f'Found {len(files)} files:')
     for file in files:
@@ -72,18 +72,42 @@ def main():
 
     # ========================================================================
     # Filter files with a valid timestamp.
-    files_with_valid_timestamps = []
+    # Store the results in list of dicts.
+
+    files_lod = []
+    current_time = pendulum.now()
     for file in files:
-        if re.search(TIMESTAMP_PAT, file.name):
-            files_with_valid_timestamps.append(file)
+        ts = re.search(TIMESTAMP_PAT, file.name)
+        if ts:
+            delta = current_time - pendulum.parse(ts.group().replace('.', ':'))
+
+            files_lod.append(
+                    {'timestamp': ts.group(),
+                        'path': file,
+                        'delta_days': int(delta.total_days() // 1),
+                        'delete': 0
+                    }
+                )
         else:
             lw.logger.debug(f'No valid timestamp in {file.name}.')
 
-# ============================================================================
-# Remove files in the keep daily range.
+    files_lod.sort(
+            key=lambda x: x['timestamp'])
+
+    for dct in files_lod:
+        lw.logger.debug(ic(dct))
+    
+    # ========================================================================
+    # Mark files for removal in the keep daily range.
+    
+    for file in range(KEEP_ALL, KEEP_DAILY):
+        pass
 
 # ============================================================================
-# Remove files in the keep weekly range.
+# Mark files for removal in the keep weekly range.
+
+# ============================================================================
+# Mark files for removal older than the keep weekly range.
 
 if __name__ == '__main__':
     main()
