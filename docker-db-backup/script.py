@@ -2,6 +2,7 @@ __doc__ = ''' Dump Docker databases to a local directory.'''
 
 #TODO: Backup mongo db containers.
 
+
 from icecream import ic
 import json
 import os
@@ -49,11 +50,12 @@ def dump_docker_mysql(container, backup_root):
     assert len(MYSQL_PWD) > 0
 
     args = (
+            f'mkdir -p {backup_root}/{container}-{MYSQL_DATABASE} &&'
             f'docker exec -e MYSQL_DATABASE={MYSQL_DATABASE} '
             f'-e MYSQL_PWD={MYSQL_PWD} '
             f'{container} /usr/bin/mysqldump '
             f'-u root {MYSQL_DATABASE} '
-            f'| gzip > {backup_root}/{container}-{MYSQL_DATABASE}-'
+            f'| gzip > {backup_root}/{container}-{MYSQL_DATABASE}/'
             '$(date +"%Y-%m-%dT%H.%M.%S").sql.gz'
             )
     res = os.system(args)
