@@ -74,53 +74,92 @@ def walk_root_dir(root):
                             'files': files
                         })
 
-    ic(root_walk)
-
     return root_walk
+
+def expand_file_objects(timestamp_pattern, files):
+    ''' Create a dict for each file. 
+        Add attributes useful for sorting and managing the files.
+
+        Attributes for each file:
+        timestamp- Extract from file name.
+        delta_days- Current time - timestamp.
+        delete- Flag controlling deletion.
+
+    '''
+    assert isinstance(timestamp_pattern, re.Pattern) 
+
+    current_time = pendulum.now()
+
+    lod = []
+
+    for file in files:
+        ts = re.search(TIMESTAMP_PAT, file)
+        if ts:
+            delta = current_time - pendulum.parse(ts.group().replace('.', ':'))
+
+            lod.append(
+                    {'timestamp': ts.group(),
+                        'path': file,
+                        'days_ago': int(delta.total_days() // 1),
+                        'delete': 0
+                    }
+                )
+        else:
+            lw.logger.debug(f'No valid timestamp in {file}.')
+
+    lod.sort(
+            key=lambda x: x['timestamp'],
+            reverse=True
+            )
+
+    return lod 
+
+def mark_daily(files, keep_all, keep_daily):
+    ''' Mark files in the daily backup range for deletion.
+    '''
+    found_daily_backup = 0
+    for file in files:
+        if file['days_ago'] > keep_all:
+            if file['days_ago'] > keep_daily:
+                break
+            else:
+                # We already found a backup for this day.
+                if file['days_ago'] == found_daily_backup:
+                    file['delete'] = 1
+                else:
+                    found_daily_backup = file['days_ago']
+
+    return files
+
+
 
 def main():
     # ========================================================================
     # Get folders containing backup files.
     dirs_containing_backups = walk_root_dir(BACKUP_ROOT) 
-    
-    '''
-    lw.logger.debug(f'Found {len(files)} files:')
-    for file in files:
-        lw.logger.debug(ic(file.name))
+   
+    for backup_dir in dirs_containing_backups:
+        backup_dir['files'] = expand_file_objects(
+                                TIMESTAMP_PAT,
+                                backup_dir['files']
+                            )
+
+    for backup_dir in dirs_containing_backups:
+        lw.logger.debug(f"Found {len(backup_dir['files'])} "
+                        f"files in {backup_dir['root']}."
+                    )
 
     # ========================================================================
-    # Filter files with a valid timestamp.
-    # Store the results in list of dicts.
-
-    files_lod = []
-    current_time = pendulum.now()
-    for file in files:
-        ts = re.search(TIMESTAMP_PAT, file.name)
-        if ts:
-            delta = current_time - pendulum.parse(ts.group().replace('.', ':'))
-
-            files_lod.append(
-                    {'timestamp': ts.group(),
-                        'path': file,
-                        'delta_days': int(delta.total_days() // 1),
-                        'delete': 0
-                    }
-                )
-        else:
-            lw.logger.debug(f'No valid timestamp in {file.name}.')
-
-    files_lod.sort(
-            key=lambda x: x['timestamp'])
-
-    for dct in files_lod:
-        lw.logger.debug(dct['delta_days'])
+    # Mark files in the keep daily range for removal. 
+    for backup_dir in dirs_containing_backups:
+        backup_dir['files'] = mark_daily(
+                                backup_dir['files'],
+                                KEEP_ALL,
+                                KEEP_DAILY
+                            )
     
-    # ========================================================================
-    # Mark files for removal in the keep daily range.
-    
-    for file in range(KEEP_ALL, KEEP_DAILY):
-        pass
-    '''
+    ic(dirs_containing_backups)
+
 # ============================================================================
 # Mark files for removal in the keep weekly range.
 
