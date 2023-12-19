@@ -131,7 +131,37 @@ def mark_daily(files, keep_all, keep_daily):
 
     return files
 
+def mark_weekly(files, keep_daily, keep_weekly):
+    ''' Mark files in the weekly backup range for deletion.
+    '''
+    
+    weekly_backup_table = []
+    for i in range(keep_daily, keep_weekly, 7):
+        weekly_backup_table.append({
+                    'start': i,
+                    'end': i + 6,
+                    'found_backup_this_week': 0
+                    })
 
+    ic(weekly_backup_table)
+
+    for file in files:
+        if file['days_ago'] < keep_daily:
+            continue
+        
+        if file['days_ago'] > keep_weekly:
+            break
+
+        for week in weekly_backup_table:
+            ic(week['start'])
+            if week['start'] <= file['days_ago'] <= week['end']:
+                # We already found a file for this week.
+                if week['found_backup_this_week']:
+                    file['delete'] = 1
+                else:
+                    week['found_backup_this_week'] = 1
+
+    return files
 
 def main():
     # ========================================================================
@@ -157,11 +187,17 @@ def main():
                                 KEEP_ALL,
                                 KEEP_DAILY
                             )
+
+    # ========================================================================
+    # Mark files for removal in the keep weekly range.
+    for backup_dir in dirs_containing_backups:
+        backup_dir['files'] = mark_weekly(
+                                backup_dir['files'],
+                                KEEP_DAILY,
+                                KEEP_WEEKLY
+                            )
     
     ic(dirs_containing_backups)
-
-# ============================================================================
-# Mark files for removal in the keep weekly range.
 
 # ============================================================================
 # Mark files for removal older than the keep weekly range.
