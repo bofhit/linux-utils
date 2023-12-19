@@ -12,14 +12,13 @@ __doc__ = ''' Manage backups by backup date.
 
 import json
 from pathlib import Path
+import os
 import re
 
 from icecream import ic
 import pendulum
 
 from ivy.wrapper import LoggerWrapper
-
-
 
 TIMESTAMP_PAT = re.compile('\d{4}-\d{2}-\d{2}T\d{2}.\d{2}.\d{2}')
 
@@ -59,13 +58,32 @@ except AssertionError as e:
     lw.logger.error(f'Parameter validation failed:{e} Script will terminate.')
     exit()
 
+def walk_root_dir(root):
+    '''
+    Walk the root directory, and return subfolders containing files.
+    '''
+
+    root_walk = []
+
+    for root, dirs, files in os.walk(root):
+        # Ignore dirs that don't contain files.
+        if files:
+            root_walk.append({
+                            'root':root,
+                            'dirs': dirs,
+                            'files': files
+                        })
+
+    ic(root_walk)
+
+    return root_walk
 
 def main():
     # ========================================================================
-    # Get all files within root directory.
-    files = list(backup_path_root.rglob('*'))
-
-
+    # Get folders containing backup files.
+    dirs_containing_backups = walk_root_dir(BACKUP_ROOT) 
+    
+    '''
     lw.logger.debug(f'Found {len(files)} files:')
     for file in files:
         lw.logger.debug(ic(file.name))
@@ -95,14 +113,14 @@ def main():
             key=lambda x: x['timestamp'])
 
     for dct in files_lod:
-        lw.logger.debug(ic(dct))
+        lw.logger.debug(dct['delta_days'])
     
     # ========================================================================
     # Mark files for removal in the keep daily range.
     
     for file in range(KEEP_ALL, KEEP_DAILY):
         pass
-
+    '''
 # ============================================================================
 # Mark files for removal in the keep weekly range.
 
