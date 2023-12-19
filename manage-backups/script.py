@@ -4,9 +4,10 @@ __doc__ = ''' Manage backups by backup date.
             Timestamp format 'YYYY-mm-DDTHH.MM.SS'.
 
             Times given in days.
-            1. Keep all backups within a given time.
-            2. Keep one backup per day within a given time.
-            3. Keep one backup per week within a given time.
+            1. Keep all backups up to a given time.
+            2. Keep daily backups up to a given time.
+            3. Keep weekly backups up to a given time.
+            4. Delete all backups older than the weekly backup range.
             
             '''
 
@@ -99,7 +100,7 @@ def expand_file_objects(timestamp_pattern, files):
 
             lod.append(
                     {'timestamp': ts.group(),
-                        'path': file,
+                        'name': file,
                         'days_ago': int(delta.total_days() // 1),
                         'delete': 0
                     }
@@ -163,6 +164,15 @@ def mark_weekly(files, keep_daily, keep_weekly):
 
     return files
 
+def mark_older_than_weekly(files, keep_weekly):
+    ''' Mark files older than the weekly backup limit.
+    '''
+    for file in files:
+        if file['days_ago'] > keep_weekly:
+            file['delete'] = 1
+
+    return files
+
 def main():
     # ========================================================================
     # Get folders containing backup files.
@@ -197,10 +207,30 @@ def main():
                                 KEEP_WEEKLY
                             )
     
+    # ========================================================================
+    # Mark files for removal older than the keep weekly range.
+    for backup_dir in dirs_containing_backups:
+        backup_dir['files'] = mark_older_than_weekly(
+                                backup_dir['files'],
+                                KEEP_WEEKLY
+                            )
+
     ic(dirs_containing_backups)
 
-# ============================================================================
-# Mark files for removal older than the keep weekly range.
+    # ========================================================================
+    # Delete files.
+    for backup_dir in dirs_containing_backups:
+        for file in backup_dir['files']:
+            file_path = backup_dir['root'] + '/' + file['name']
+            if file['delete']:
+                try:
+                    os.system(f'rm {file_path}')
+                    lw.logger.info(f'Removed file:{file_path}')
+                except FileNotFoundError:
+                    lw.logger.error(f'File not found:{file_path}')
+                except PermissionError:
+                    lw.logger.error(f'Permissions error:{file_path}')
+    
 
 if __name__ == '__main__':
     main()
