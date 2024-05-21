@@ -12,6 +12,12 @@
             "BACKUP_ROOT": "~/apps/docker/dumps"
         },
         { 
+            "APP": "rf-kiosk-print",
+            "DATABASE": "MySQL",
+            "BACKUP_COUNT": 7,
+            "BACKUP_ROOT": "~/apps/docker/dumps"
+        },
+        { 
             "APP": "Snipe-IT",
             "DATABASE": "MySQL",
             "BACKUP_COUNT": 7,
