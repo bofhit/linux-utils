@@ -5,7 +5,10 @@ client = docker.from_env()
 
 containers = client.containers.list()
 
-ports = [c.ports for c in containers]
+ports = {}
+
+for c in containers:
+    ports[c.name] = c.ports
 
 ic(ports)
 
