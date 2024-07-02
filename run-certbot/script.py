@@ -18,24 +18,25 @@ lw = LoggerWrapper(
         CONFIG['LOG_FILE'],
     )
 
-def is_port_open(port:int, container_ports:dict) -> int:
-    port_str = str(port)
-    for port_list in container_ports.values():
-        host_ports = [k['HostPort'] for k in port_list]
-        if port_str in host_ports:
-            return True
+def is_port_open(host_port:int, container_port:int, container_ports:dict) -> int:
+    host_port_str= str(host_port)
+    container_port_str = str(container_port)
+    for port, port_list in container_ports.items():
+        if container_port_str in port:
+            if host_port_str in [k['HostPort'] for k in port_list]:
+                return True
     return False
 
 def main(
         container_name:str,
-        http_port:int,
-        https_port:int,
+        host_http:int,
+        container_http:int,
         lets_encrypt_volume:str
     ) -> int:
 
     lw.logger.debug(f'Param container_name={container_name}')
-    lw.logger.debug(f'Param http_port={http_port}')
-    lw.logger.debug(f'Param https_port={https_port}')
+    lw.logger.debug(f'Param host_http={host_http}')
+    lw.logger.debug(f'Param container_http={container_http}')
     lw.logger.debug(f'Param lets_encrypt_volume={lets_encrypt_volume}')
 
 
@@ -45,8 +46,8 @@ def main(
     # PRE-RUN CHECKS
 
     try:
-        http_port = int(http_port)
-        https_port = int(https_port)
+        host_http = int(host_http)
+        container_http = int(container_http)
     except Exception as e:
         lw.logger.exception(e)
         return 1
@@ -65,38 +66,46 @@ def main(
 
     try:
         container_ports = client.containers.get(container_name).ports
-        if not is_port_open(http_port, container_ports):
-            lw.logger.error(f'Port {http_port} not open on {container_name}.')
-            return 1
-        if not is_port_open(https_port, container_ports):
-            lw.logger.error(f'Port {https_port} not open on {container_name}.')
+        if not is_port_open(host_http, container_http, container_ports):
+            lw.logger.error(f'Port {host_http}:{container_http} not open on {container_name}.')
             return 1
     except Exception as e:
         lw.logger.exception(e)
 
+    container = client.containers.get(container_name)
 
     # ========================================================================
     # SHUT DOWN PRODUCTION CONTAINER
+    try:
+        container.stop()
+        lw.logger.debug(f'Successfully stopped container {container_name}.')
+    except Exception as e:
+        lw.logger.exception(e)
 
     # ========================================================================
     # RUN LET'S ENCRYPT CONTAINER
 
     # ========================================================================
     # RESTART PRODUCTION CONTAINER
+    try:
+        container.start()
+        lw.logger.debug(f'Successfully restarted container {container_name}.')
+    except Exception as e:
+        lw.logger.exception(e)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('container_name', type=str, help='Target container name.')
-    parser.add_argument('http_port', type=str, help='HTTP port.')
-    parser.add_argument('https_port', type=str, help='HTTPS port.')
+    parser.add_argument('host_http', type=str, help='Host HTTP port.')
+    parser.add_argument('container_http', type=str, help='Container HTTP port.')
     parser.add_argument('lets_encrypt_volume', type=str)
 
     args = parser.parse_args()
 
     main(
         args.container_name,
-        args.http_port,
-        args.https_port,
+        args.host_http,
+        args.container_http,
         args.lets_encrypt_volume
     )
