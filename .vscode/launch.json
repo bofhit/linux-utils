@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug run-certbot script",
+            "type": "debugpy",
+            "program": "${file}",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}\\run-certbot",
+            "args": [
+                        "penguin-penguin-1",
+                        "5025", "5025",
+                        "letsencrypt_penguin"
+            ]
+        }
+    ]
+}

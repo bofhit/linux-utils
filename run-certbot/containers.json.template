@@ -1,4 +1,3 @@
-"containers": {
 [
     {
         "CONTAINER_NAME": "snipeit",
@@ -7,4 +6,3 @@
         "CONTAINER_PORT": "80"
     }
 ]
-}

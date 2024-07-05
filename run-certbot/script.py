@@ -6,8 +6,9 @@ import docker
 from ivy.wrapper import LoggerWrapper
 '''
 I am making the following assumptions:
-* All the target containers are in a running state.
-* All the target containers are able listen for http and https connections.
+* All the target containers are running.
+* All the target containers are able listen for http connections.
+* Naming convention for volumes- letsencrypt_<container name>
 '''
 with open('config.json', 'r') as f:
     CONFIG = json.load(f)
@@ -64,6 +65,7 @@ def main(
         )
         return 1
 
+    # Verify the expected host-container port combo exists.
     try:
         container_ports = client.containers.get(container_name).ports
         if not is_port_open(host_http, container_http, container_ports):
@@ -84,6 +86,8 @@ def main(
 
     # ========================================================================
     # RUN LET'S ENCRYPT CONTAINER
+
+
 
     # ========================================================================
     # RESTART PRODUCTION CONTAINER
