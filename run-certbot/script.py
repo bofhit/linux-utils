@@ -4,6 +4,9 @@ import json
 import docker
 
 from ivy.wrapper import LoggerWrapper
+
+#TODO: Parameterize certbot container name.
+
 '''
 I am making the following assumptions:
 * All the target containers are running.
@@ -12,6 +15,7 @@ I am making the following assumptions:
 '''
 with open('config.json', 'r') as f:
     CONFIG = json.load(f)
+
 
 lw = LoggerWrapper(
         CONFIG['LOGGER_NAME'],
@@ -30,15 +34,18 @@ def is_port_open(host_port:int, container_port:int, container_ports:dict) -> int
 
 def main(
         container_name:str,
+        domain:str,
         host_http:int,
         container_http:int,
-        lets_encrypt_volume:str
+        letsencrypt_etc:str,
+        letsencrypt_var:str,
     ) -> int:
 
     lw.logger.debug(f'Param container_name={container_name}')
     lw.logger.debug(f'Param host_http={host_http}')
     lw.logger.debug(f'Param container_http={container_http}')
-    lw.logger.debug(f'Param lets_encrypt_volume={lets_encrypt_volume}')
+    lw.logger.debug(f'Param letsencrypt_etc={letsencrypt_etc}')
+    lw.logger.debug(f'Param letsencrypt_var={letsencrypt_var}')
 
 
     client = docker.from_env()
@@ -59,9 +66,15 @@ def main(
         )
         return 1
 
-    if not lets_encrypt_volume in [c.name for c in client.volumes.list()]:
+    if not letsencrypt_etc in [c.name for c in client.volumes.list()]:
         lw.logger.error(
-            f'Volume {lets_encrypt_volume} not found in docker environment.'
+            f'Volume {letsencrypt_etc} not found in docker environment.'
+        )
+        return 1
+
+    if not letsencrypt_var in [c.name for c in client.volumes.list()]:
+        lw.logger.error(
+            f'Volume {letsencrypt_var} not found in docker environment.'
         )
         return 1
 
@@ -74,42 +87,85 @@ def main(
     except Exception as e:
         lw.logger.exception(e)
 
+    if 'certbot' in client.containers.list():
+        try:
+            container = client.containers.get('certbot')
+            container.remove()
+        except Exception as e:
+            lw.logger.exception(e)
+
     container = client.containers.get(container_name)
 
     # ========================================================================
     # SHUT DOWN PRODUCTION CONTAINER
     try:
         container.stop()
-        lw.logger.debug(f'Successfully stopped container {container_name}.')
+        lw.logger.info(f'Successfully stopped container {container_name}.')
     except Exception as e:
         lw.logger.exception(e)
+        return 1
 
     # ========================================================================
     # RUN LET'S ENCRYPT CONTAINER
 
+    certbot_command = (
+        'certonly '
+        '--standalone '
+        f'-d {domain} '
+        '--non-interactive '
+        '--agree-tos '
+        '-m it@blessingsofhope.com'
+    )
+
+    lw.logger.info('Initializing LetsEncrypt container.')
+    try:
+        client.containers.run(
+            'certbot/certbot:latest',
+            command=certbot_command,
+            name='certbot',
+            volumes=[
+                f'{letsencrypt_etc}:/etc/letsencrypt',
+                f'{letsencrypt_var}:/var/log/letsencrypt'
+            ],
+            auto_remove=True
+        )
+        lw.logger.info('LetsEncrypt container exited with no exceptions.')
+    except Exception as e:
+        lw.logger.exception(e)
+        lw.logger.info(f'Restarting {container_name} after certbot failure.')
+        container.start()
+        lw.logger.debug(f'Successfully restarted container {container_name}.')
+        return 1
 
 
     # ========================================================================
     # RESTART PRODUCTION CONTAINER
     try:
         container.start()
-        lw.logger.debug(f'Successfully restarted container {container_name}.')
+        lw.logger.info(f'Successfully restarted container {container_name}.')
     except Exception as e:
         lw.logger.exception(e)
+        return 1
+
+    return 0
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('container_name', type=str, help='Target container name.')
+    parser.add_argument('domain', type=str, help='Domain to renew.')
     parser.add_argument('host_http', type=str, help='Host HTTP port.')
     parser.add_argument('container_http', type=str, help='Container HTTP port.')
-    parser.add_argument('lets_encrypt_volume', type=str)
+    parser.add_argument('letsencrypt_etc', type=str)
+    parser.add_argument('letsencrypt_var', type=str)
 
     args = parser.parse_args()
 
     main(
         args.container_name,
+        args.domain,
         args.host_http,
         args.container_http,
-        args.lets_encrypt_volume
+        args.letsencrypt_etc,
+        args.letsencrypt_var
     )

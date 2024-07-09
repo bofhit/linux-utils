@@ -10,8 +10,10 @@
             "cwd": "${workspaceFolder}\\run-certbot",
             "args": [
                         "penguin-penguin-1",
-                        "5025", "5025",
-                        "letsencrypt_penguin"
+                        "penguin.int.blessingsofhope.com",
+                        "80", "80",
+                        "letsencrypt_penguin_etc",
+                        "letsencrypt_penguin_var"
             ]
         }
     ]
