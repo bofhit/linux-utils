@@ -1,10 +1,5 @@
-"containers": {
-[
-    {
-        "CONTAINER_NAME": "snipeit",
-        "DOMAIN": "snipeit.lan.com",
-        "HOST_PORT": "80",
-        "CONTAINER_PORT": "80"
-    }
-]
+{ 
+    "LOGGER_NAME": "descriptive_name",
+    "LOGGING_CONFIG": "config_path",
+    "LOG_FILE": "output_path"
 }

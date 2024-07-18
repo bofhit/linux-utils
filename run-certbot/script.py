@@ -5,6 +5,15 @@ import docker
 
 from ivy.wrapper import LoggerWrapper
 
+'''
+I had assumed I would create copy of the Let's Encrypt live folder and sync 
+that to the production containers with volumes.
+That's not a good approach, what will work better is to extract just the files 
+needed on the production containers, (cert and private key) and map them to the
+production containers.
+'''
+
+
 #TODO: Parameterize certbot container name.
 
 '''
