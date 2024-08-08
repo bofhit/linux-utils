@@ -1,8 +1,10 @@
 [
     {
-        "CONTAINER_NAME": "snipeit",
-        "DOMAIN": "snipeit.lan.com",
+        "CONTAINER_NAME": "penguin-penguin-1",
+        "DOMAIN": "penguin.int.blessingsofhope.com",
         "HOST_PORT": "80",
-        "CONTAINER_PORT": "80"
+        "CONTAINER_PORT": "80",
+        "SSL_CERT_VOL": "cert_vol",
+        "SSL_KEY_VOL": "key_vol"
     }
 ]
