@@ -7,4 +7,5 @@
 ivy
 sonicwall
 *swo
+*.log
 
