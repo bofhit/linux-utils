@@ -25,7 +25,6 @@ I am making the following assumptions:
 with open('config.json', 'r') as f:
     CONFIG = json.load(f)
 
-
 lw = LoggerWrapper(
         CONFIG['LOGGER_NAME'],
         CONFIG['LOGGING_CONFIG'],
@@ -123,7 +122,7 @@ def main(
         f'-d {domain} '
         '--non-interactive '
         '--agree-tos '
-        '-m it@blessingsofhope.com'
+        '-m it@blessingsofhope.com '
     )
 
     lw.logger.info('Initializing LetsEncrypt container.')
