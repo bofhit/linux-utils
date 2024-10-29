@@ -14,6 +14,8 @@ with open('containers.json', 'r') as f:
 with open('config.json', 'r') as f:
     CONFIG = json.load(f)
 
+TEST_CERT = CONFIG['TEST_CERT']
+
 lw = LoggerWrapper(
         CONFIG['LOGGER_NAME'],
         CONFIG['LOGGING_CONFIG'],
@@ -25,10 +27,10 @@ for container in CONTAINERS:
         main(
                 container['CONTAINER_NAME'],
                 container['DOMAIN'],
-                container['HOST_HTTP'],
-                container['CONTAINER_HTTP'],
-                container['SSL_CERT_VOL'],
-                container['SSL_KEY_VOL'],
+                container['HOST_PORT'],
+                container['CONTAINER_PORT'],
+                container['LETSENCRYPT_VOL'],
+                TEST_CERT
                 )
     except Exception as e:
         lw.logger.exception(e)
