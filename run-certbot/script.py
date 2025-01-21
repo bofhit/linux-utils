@@ -39,10 +39,11 @@ def main(
     ) -> int:
 
     lw.logger.debug(f'Param container_name={container_name}')
+    lw.logger.debug(f'Param domain={domain}')
     lw.logger.debug(f'Param host_port={host_port}')
     lw.logger.debug(f'Param container_port={container_port}')
     lw.logger.debug(f'Param letsencrypt_vol={letsencrypt_vol}')
-
+    lw.logger.debug(f'Param test_cert={test_cert}')
 
     client = docker.from_env()
 
@@ -78,11 +79,7 @@ def main(
         lw.logger.exception(e)
 
     if 'certbot' in client.containers.list():
-        try:
-            container = client.containers.get('certbot')
-            container.remove()
-        except Exception as e:
-            lw.logger.exception(e)
+        pass
 
     container = client.containers.get(container_name)
 
@@ -99,22 +96,27 @@ def main(
     # RUN LET'S ENCRYPT CONTAINER
 
     certbot_command = (
-        'certonly '
+        'certbot certonly '
         '--standalone '
         f'-d {domain} '
         '--non-interactive '
         '--agree-tos '
         '-m it@blessingsofhope.com '
     )
+    
+    if test_cert:
+        certbot_command += '--test-cert '
 
     lw.logger.info('Initializing LetsEncrypt container.')
     try:
         client.containers.run(
             'certbot/certbot:latest',
+            ports={80:host_port},
             command=certbot_command,
             name='certbot',
             volumes=[
                 f'{letsencrypt_vol}:/etc/letsencrypt/live/{domain}',
+                #'letsencrypt-var:/var/log/letsencrypt'
             ],
             auto_remove=True
         )
